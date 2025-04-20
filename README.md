@@ -29,12 +29,7 @@ A real-time chat application built with Spring Boot, WebSocket (STOMP), Spring S
    ```bash
    mvn clean package
    mvn spring-boot:run
-   ```
-   - Run test.html
-   - go \src\main\resources\templates>
-   - run:
-   ```bash
-   python -m http.server 5500
+
    ```
 
 4. Application runs at: `http://localhost:8080`
