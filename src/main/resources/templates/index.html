@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Chat Test - Refactored</title>
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="../static/css/styles.css">
+
+    <!-- External Libraries (SockJS and StompJS) -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+</head>
+<body>
+<div id="sidebar">
+
+    <!-- User Info & Logout -->
+    <div class="section">
+        <h2>User</h2>
+        <div id="userInfo">Loading...</div>
+        <button id="logoutBtn" onclick="logout()" class="danger" style="width: 100%; margin-top: 10px;">Logout</button>
+    </div>
+
+    <!-- Create Chat Section -->
+    <div class="section">
+        <h2>Create Chat</h2>
+        <div>
+            <label for="groupName">Group Name:</label>
+            <input type="text" id="groupName" placeholder="Enter name for new group">
+            <button id="createGroupBtn" onclick="createGroupChat()" disabled>Create Group</button>
+            <small style="font-size: 0.8em; color: #666;">Creates group with only you.</small>
+        </div>
+        <hr style="margin: 10px 0;">
+        <div>
+            <label for="privateChatUsername">Username for Private Chat:</label>
+            <input type="text" id="privateChatUsername" placeholder="Enter Username">
+            <button id="createPrivateChatBtn" onclick="getOrCreatePrivateChat()" disabled>Get/Create Private</button>
+        </div>
+    </div>
+
+    <!-- Participant Management Section (Initially Hidden) -->
+    <div id="participant-management" class="section">
+        <h2>Manage Participants (<span id="pm-group-name">Group</span>)</h2>
+        <div>
+            <label for="participantUsername">Username:</label>
+            <input type="text" id="participantUsername" placeholder="Username to add/remove">
+        </div>
+        <div>
+            <button id="addParticipantBtn" onclick="addParticipant()" disabled>Add</button>
+            <button id="removeParticipantBtn" onclick="removeParticipant()" disabled class="danger">Remove</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <strong>Current Participants:</strong>
+            <div id="participant-list"></div>
+        </div>
+    </div>
+
+    <!-- Chat List Section -->
+    <div class="section" style="flex-grow: 1; display: flex; flex-direction: column;">
+        <h2>Your Chats</h2>
+        <button id="refreshChatsBtn" onclick="loadUserChats()" disabled class="secondary" style="margin-bottom: 5px;">Refresh List</button>
+        <div id="chat-list">
+            <p style="color: #888; padding: 10px;">Connect to load chats...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Chat Area -->
+<div id="chat-area">
+    <div id="chat-title">No chat selected</div>
+    <div id="messages"></div>
+    <div id="message-input-area">
+        <input type="text" id="messageInput" placeholder="Type message..." disabled>
+        <button id="sendBtn" onclick="sendMessage()" disabled title="Send">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send-fill" viewBox="0 0 16 16">
+                <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471Z"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<!-- External JavaScript (Application Logic) -->
+<!-- Placed at the end of body so DOM elements are loaded before script runs -->
+<script src="../static/js/app.js"></script>
+</body>
+</html>

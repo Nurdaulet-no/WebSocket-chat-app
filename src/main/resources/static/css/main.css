@@ -1,0 +1,166 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(45deg, #000000, #d9d9d9); /* Fallback background */
+    background-size: 400%;
+    animation: colorShift 10s ease infinite;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@keyframes colorShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Canvas for fluid animation */
+#fluidCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Navigation Bar */
+.navbar {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 3;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.btn {
+    padding: 10px 20px;
+    background: linear-gradient(45deg, #555555, #aaaaaa);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn:hover {
+    transform: scale(1.05);
+    background: linear-gradient(45deg, #444444, #999999);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.signup-btn {
+    background: linear-gradient(45deg, #4ecdc4, #2ecc71);
+}
+
+.signup-btn:hover {
+    background: linear-gradient(45deg, #3bb8b0, #27ae60);
+}
+
+.signin-btn {
+    background: linear-gradient(45deg, #555555, #aaaaaa);
+}
+
+.signin-btn:hover {
+    background: linear-gradient(45deg, #444444, #999999);
+}
+
+/* Main Content */
+.content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 600px;
+    padding: 30px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 1.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.content h1 {
+    font-size: 2.5em;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.content p {
+    font-size: 1.1em;
+    line-height: 1.6;
+    font-weight: 300;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .navbar {
+        top: 10px;
+        right: 10px;
+    }
+
+    .nav-buttons {
+        gap: 10px;
+    }
+
+    .btn {
+        padding: 8px 15px;
+        font-size: 12px;
+    }
+
+    .content {
+        padding: 20px;
+        margin: 20px;
+    }
+
+    .content h1 {
+        font-size: 2em;
+    }
+
+    .content p {
+        font-size: 1em;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .content {
+        margin: 15px;
+        padding: 15px;
+    }
+
+    .content h1 {
+        font-size: 1.8em;
+    }
+
+    .content p {
+        font-size: 0.9em;
+    }
+}
