@@ -27,10 +27,13 @@ jwt:
   expiration:
     ms: 18000000
 
-
 #logging:
 #  level:
-#    root: DEBUG
-#
+#    org.springframework.security: TRACE
+
+logging:
+  level:
+    root: DEBUG
+
 
 

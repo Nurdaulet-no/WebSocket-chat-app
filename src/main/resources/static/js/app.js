@@ -152,18 +152,12 @@ function decodeJwtPayload(token) {
 
 // --- API Calls ---
 async function apiFetch(url, options = {}) {
-    const token = localStorage.getItem('jwtToken');
-    if (!token) {
-        logError("Authentication token missing from storage.");
-        // Redirect to login if essential API call fails without token?
-        window.location.href = 'login.html';
+    if (!currentUser || !currentUser.token) {
+        logError("Authentication token is missing from state.");
+        logout(); // Если нет токена в состоянии, выходим и редиректим
         throw new Error("Not authenticated.");
     }
-
-    if (!currentUser) {
-        const payload = decodeJwtPayload(token);
-        if (payload && payload.sub) currentUser = { username: payload.sub }; // Set username if available
-    }
+    const token = currentUser.token;
 
     const defaultHeaders = {
         'Authorization': `Bearer ${token}`,
@@ -193,30 +187,31 @@ async function apiFetch(url, options = {}) {
         const data = await response.json();
         return data;
     } catch(error) {
-        logError(`Network or parsing error during API fetch to ${url}`, error);
+        if (!error.message?.includes('API Error')) {
+            logError(`Network or parsing error during API fetch to ${url}`, error);
+        }
         throw error; // Re-throw after logging
     }
 }
 
 // --- WebSocket Logic ---
-function connect() {
-    const jwtToken = localStorage.getItem('jwtToken');
-    if (!jwtToken) {
-        logError("No JWT Token found in storage. Redirecting to login.");
-        // Redirect to login if no token
-        window.location.href = 'login.html';
+function connect(token) {
+    if (!token) {
+        logError("Connect function called without token.");
+        handleDisconnect(true);
+        window.location.href = '/login.html';
         return;
     }
 
-    const payload = decodeJwtPayload(jwtToken);
-    if (!payload || !payload.sub) { return;
-        logError("Invalid JWT Token in storage. Clearing and redirecting to login.");
+    const payload = decodeJwtPayload(token);
+    if (!payload || !payload.sub) {
+        logError("Invalid JWT Token found. Clearing and redirecting to login.");
         localStorage.removeItem('jwtToken');
-        window.location.href = 'login.html';
+        handleDisconnect(false);
+        window.location.href = '/login.html';
         return;
-    } // Error logged in decode function
-
-    currentUser = { username: payload.sub, token: jwtToken };
+    }
+    currentUser = { username: payload.sub, token: token };
     log(`Attempting to connect as ${currentUser.username}...`);
 
     const socketFactory = () => new SockJS('http://localhost:8080/ws');
@@ -234,8 +229,16 @@ function connect() {
     };
     stompClient.onStompError = (frame) => { logError(`Broker error: ${frame.headers['message']}. Details: ${frame.body}`); handleDisconnect(false); };
     stompClient.onWebSocketError = (event) => { logError('WebSocket connection error', event); handleDisconnect(true); };
-    stompClient.onWebSocketClose = (event) => { log(`WebSocket closed: Code=${event.code}, Reason=${event.reason || 'N/A'}`, 'warn'); handleDisconnect(false); };
-
+    stompClient.onWebSocketClose = (event) => {
+        log(`WebSocket closed: Code=${event.code}, Reason=${event.reason || 'N/A'}`, 'warn');
+        const wasConnected = currentUser !== null;
+        handleDisconnect(false);
+        if (wasConnected && event.code !== 1000) {
+            logError("Unexpected disconnection. Redirecting to login.");
+            alert("Connection lost. Please login again.");
+            window.location.href = '/login.html';
+        }
+    };
     try { stompClient.activate(); } catch (error) { logError('STOMP client activation error', error); handleDisconnect(true); }
 }
 
@@ -317,21 +320,22 @@ function handleDisconnect(logMsg = true) {
 
 function disconnect() {
     log("Disconnecting...  / Logging out...");
+    handleDisconnect(true);
+}
+
+function logout() {
+    log("Logging out...");
     if (stompClient && stompClient.active) {
         try { stompClient.deactivate(); } catch (e) { logError("Error during STOMP deactivation", e); }
     }
     stompClient = null;
-    localStorage.removeItem('jwtToken'); // Clear token on explicit disconnect/logout
+    localStorage.removeItem('jwtToken');
     currentUser = null;
     currentChat = null;
     currentSubscription = null;
     setUIState(false); // Reset UI
-    log("Logged out and disconnected.", 'warn');
-    window.location.href = 'login.html';
-}
-
-function logout() {
-    disconnect(); // Call the disconnect function which now handles logout logic
+    log("Logged out successfully.", 'success');
+    window.location.href = '/login.html';
 }
 
 // --- Chat Functionality ---
@@ -405,7 +409,7 @@ async function selectChat(id, name, type, participants = []) { // Accept partici
     if (currentChat && currentChat.id === id) {
         // Optional: If clicking the same chat, refresh its details
         if (type === 'GROUP') {
-            fetchChatDetails(id); // Re-fetch details including participants
+            await fetchChatDetails(id); // Re-fetch details including participants
         }
         return;
     }
@@ -735,11 +739,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('jwtToken');
     if (token) {
         log("Found JWT token in storage, attempting to connect...");
-        connect(); // Try to connect automatically
+        connect(token); // Try to connect automatically
     } else {
         log("No JWT token found. Please login.", "warn");
         setUIState(false);
-        window.location.href = 'login.html';
+        window.location.href = '/login.html';
     }
 
     // Add event listeners that rely on DOM elements
@@ -762,6 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.removeParticipant = removeParticipant;
     window.loadUserChats = loadUserChats;
     window.sendMessage = sendMessage;
+    window.disconnect = disconnect;
 
     log("Application initialized.");
 });

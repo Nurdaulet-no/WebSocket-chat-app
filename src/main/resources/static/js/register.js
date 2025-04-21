@@ -1,4 +1,3 @@
-// register.js
 document.addEventListener('DOMContentLoaded', function() {
     const registerForm = document.getElementById('registerForm');
     const errorMessage = document.getElementById('errorMessage');
@@ -12,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Get form inputs
             const usernameInput = registerForm.querySelector('input[name="username"]');
-            const firstNameInput = registerForm.querySelector('input[name="firstName"]'); // Changed name to firstName
+            const firstNameInput = registerForm.querySelector('input[name="firstName"]');
             const emailInput = registerForm.querySelector('input[name="email"]');
             const passwordInput = registerForm.querySelector('input[name="password"]');
             const confirmPasswordInput = registerForm.querySelector('input[name="confirmPassword"]');
@@ -27,15 +26,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorMessage.style.display = 'block';
                 return;
             }
-            if (password.length < 6) { // Example: Basic password length check
-                errorMessage.textContent = 'Password must be at least 6 characters long.';
+            if (password.length < 8 || password.length > 25) {
+                errorMessage.textContent = 'Password must be between 8 and 25 characters long.';
                 errorMessage.style.display = 'block';
                 return;
             }
 
             const userData = {
                 username: usernameInput.value.trim(),
-                userFirstName: firstNameInput.value.trim(), // Match DTO field name
+                userFirstName: firstNameInput.value.trim(),
                 email: emailInput.value.trim(),
                 password: password // Send the plain password
             };
@@ -55,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (response.ok) { // Check for 200 OK or 201 Created
                     console.log('Registration successful!');
                     // Redirect to login page with success indicator
-                    window.location.href = 'login.html?registered=true';
+                    window.location.href = '/login.html?registered=true';
                 } else {
                     // Handle registration errors (e.g., 409 Conflict)
                     let errorMsg = `Registration failed: ${response.statusText}`;

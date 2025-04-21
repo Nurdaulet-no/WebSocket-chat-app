@@ -70,8 +70,22 @@ public class SecurityConfig {
         return httpSecurity.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
-                        .requestMatchers("/error").permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/login.html",
+                                "/register.html",
+                                "/main.html",
+                                "/css/**",
+                                "/js/script.js",
+                                "/js/login.js",
+                                "/js/register.js",
+                                "/fonts/**",
+                                "favicon.ico",
+                                "/error",
+                                "/index.html",
+                                "/js/app.js"
+                        ).permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated())

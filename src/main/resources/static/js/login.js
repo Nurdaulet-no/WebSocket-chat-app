@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         console.log('Login successful, token stored.');
                         // --- Redirect to the main chat page ---
-                        window.location.href = 'index.html'; // Redirect to your main chat page
+                        window.location.href = '/index.html'; // Redirect to your main chat page
                     } else {
                         throw new Error("Token not found in login response");
                     }
