@@ -53,7 +53,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:5500"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5500"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control", "X-Requested-With"));
 
@@ -72,18 +72,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
-                                "/login.html",
-                                "/register.html",
                                 "/main.html",
-                                "/css/**",
+                                "/css/main.css",
                                 "/js/script.js",
-                                "/js/login.js",
-                                "/js/register.js",
                                 "/fonts/**",
                                 "favicon.ico",
-                                "/error",
-                                "/index.html",
-                                "/js/app.js"
+                                "/error"
                         ).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()

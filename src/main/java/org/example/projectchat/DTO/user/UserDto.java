@@ -1,4 +1,7 @@
-package org.example.projectchat.DTO;
+package org.example.projectchat.DTO.user;
 
-public class UserDto {
+public record UserDto(
+        Long id,
+        String username
+) {
 }

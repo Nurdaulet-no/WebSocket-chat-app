@@ -10,7 +10,7 @@ import org.example.projectchat.model.Message;
 import org.example.projectchat.model.User;
 import org.example.projectchat.repository.ChatRoomRepository;
 import org.example.projectchat.repository.MessageRepository;
-import org.example.projectchat.repository.UserRepository;
+import org.example.projectchat.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -25,20 +25,21 @@ import java.security.Principal;
 @Controller
 @Slf4j
 @RequiredArgsConstructor
-public class ChatController {
+public class StompChatController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final MessageRepository messageRepository;
-    private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final UserService userService;
 
+    // Real time STOMP message handling
     @MessageMapping("/chat/{roomId}/sendMessage")
     @Transactional
     public void sendMessage(@DestinationVariable Long roomId, @Payload ChatMessageDto chatMessageDto, Principal principal){
         String username = principal.getName();
         log.info("Сообщение получено для комнаты {}: от {}: {}", roomId, username, chatMessageDto.content());
 
-        User sender = userRepository.findByUsername(username).orElseThrow(()->{
+        User sender = userService.findByUsername(username).orElseThrow(()->{
             log.error("Ошибка: Пользователь {} не найден", username);
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender not found");
         });

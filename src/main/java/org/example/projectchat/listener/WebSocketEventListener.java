@@ -2,7 +2,7 @@ package org.example.projectchat.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.projectchat.DTO.ChatMessageDto;
+import org.example.projectchat.DTO.chat.ChatMessageDto;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;

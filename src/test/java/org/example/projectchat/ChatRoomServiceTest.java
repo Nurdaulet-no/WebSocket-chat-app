@@ -1,6 +1,6 @@
 package org.example.projectchat;
 
-import org.example.projectchat.DTO.ChatRoomDto;
+import org.example.projectchat.DTO.chat.ChatRoomDto;
 import org.example.projectchat.model.ChatRoom;
 import org.example.projectchat.model.ChatRoomType;
 import org.example.projectchat.model.User;

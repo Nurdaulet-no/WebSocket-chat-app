@@ -47,7 +47,10 @@ public class JWTRequestFilter extends OncePerRequestFilter {
         try {
             String username = jwtUtil.extractUsername(jwt);
 
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(username);
+            log.debug("Authenticated user ID: {}", userDetails.getId());
+            log.debug("Admin Group IDs: {}", userDetails.getAdminGroupIds());
+
 
             if(jwtUtil.validateToken(jwt, userDetails)){
 

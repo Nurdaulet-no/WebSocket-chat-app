@@ -1,4 +1,4 @@
-package org.example.projectchat.DTO;
+package org.example.projectchat.DTO.chat;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

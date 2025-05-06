@@ -2,11 +2,10 @@ package org.example.projectchat.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.projectchat.DTO.MessageDto;
-import org.example.projectchat.DTO.MessageRequest;
+import org.example.projectchat.DTO.chat.MessageDto;
+import org.example.projectchat.DTO.chat.MessageRequest;
 import org.example.projectchat.model.Message;
 import org.example.projectchat.model.User;
-import org.example.projectchat.repository.ChatRoomRepository;
 import org.example.projectchat.repository.MessageRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -20,8 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class MessageService {
     private final MessageRepository messageRepository;
+    private final ChatRoomService chatRoomService;
     private final ModelMapper modelMapper;
-    private final ChatRoomRepository chatRoomRepository;
 
     public void saveMessage(MessageRequest messageRequest){
         Message message = modelMapper.map(messageRequest, Message.class);
@@ -31,7 +30,7 @@ public class MessageService {
 
     @Transactional(readOnly = true)
     public Page<MessageDto> findMessageHistory(Long chatRoomId, User user, Pageable pageable){
-        if(!chatRoomRepository.existsByIdAndParticipants_Id(chatRoomId, user.getId())){
+        if(!chatRoomService.existsByIdAndParticipants_Id(chatRoomId, user.getId())){
             log.warn("Access denied: User {} not contain in group {}", user.getUsername(), chatRoomId);
             throw new AccessDeniedException("Access denied for history of this group");
         }

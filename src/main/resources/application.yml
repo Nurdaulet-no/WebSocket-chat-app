@@ -21,16 +21,21 @@ spring:
   flyway:
     enabled: true
 
+
 jwt:
   secret:
     key: ${JWT_SECRET_KEY}
   expiration:
-    ms: 18000000
+    access-token: ${JWT_ACCESS_TIME}
+    refresh-token: ${JWT_REFRESH_TIME}
+
+
+
 
 #logging:
 #  level:
 #    org.springframework.security: TRACE
-
+#
 logging:
   level:
     root: DEBUG

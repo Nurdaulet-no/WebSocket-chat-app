@@ -1,4 +1,4 @@
-package org.example.projectchat.DTO;
+package org.example.projectchat.DTO.chat;
 
 import java.time.LocalDateTime;
 

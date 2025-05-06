@@ -4,12 +4,11 @@ import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.projectchat.DTO.ChatRoomDto;
+import org.example.projectchat.DTO.chat.ChatRoomDto;
 import org.example.projectchat.model.ChatRoom;
 import org.example.projectchat.model.ChatRoomType;
 import org.example.projectchat.model.User;
 import org.example.projectchat.repository.ChatRoomRepository;
-import org.example.projectchat.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -25,7 +24,7 @@ import java.util.Set;
 @Slf4j
 public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     public List<ChatRoomDto> findUserChatRooms(User user){
         Set<ChatRoom> userRooms = chatRoomRepository.findByParticipantsContaining(user);
@@ -64,7 +63,7 @@ public class ChatRoomService {
         participants.add(creator);
 
         if(initParticipantUsernames != null && !initParticipantUsernames.isEmpty()){
-            List<User> foundUsers = userRepository.findByUsernameIn(initParticipantUsernames);
+            List<User> foundUsers = userService.findByUsernameInSet(initParticipantUsernames);
             participants.addAll(foundUsers);
         }
         chatRoom.setParticipants(participants);
@@ -86,7 +85,7 @@ public class ChatRoomService {
     @Transactional
     public ChatRoomDto getOrCreateChatRoomService(User userA, String userBUsername){
         // find userB
-        User userB = userRepository.findByUsername(userBUsername)
+        User userB = userService.findByUsername(userBUsername)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with username:"+userBUsername+" NOT FOUND"));
 
         // check its not same user
@@ -145,7 +144,7 @@ public class ChatRoomService {
             throw new AccessDeniedException("You are not contain and cant add user in this group");
         }
 
-        User userToAdd = userRepository.findByUsername(usernameToAdd)
+        User userToAdd = userService.findByUsername(usernameToAdd)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User to add participant not found"));
 
         boolean added = chatRoom.getParticipants().add(userToAdd);
@@ -179,7 +178,7 @@ public class ChatRoomService {
             throw new AccessDeniedException("You are not contain and cant add user in this group");
         }
 
-        User userToDelete = userRepository.findByUsername(usernameToDelete)
+        User userToDelete = userService.findByUsername(usernameToDelete)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User" + usernameToDelete + " for delete is not found"));
 
         if(initiator.getId().equals(userToDelete.getId())){
@@ -212,6 +211,12 @@ public class ChatRoomService {
 
         log.info("Загружены детали для комнаты ID {} для пользователя {}", roomId, user.getUsername());
         return mapToChatRoomDto(chatRoom, user.getUsername());
+    }
+
+
+
+    public boolean existsByIdAndParticipants_Id(Long chatRoomId, Long userId){
+        return chatRoomRepository.existsByIdAndParticipants_Id(chatRoomId, userId);
     }
 
     private ChatRoomDto mapToChatRoomDto(ChatRoom chatRoom, String currentUsername){

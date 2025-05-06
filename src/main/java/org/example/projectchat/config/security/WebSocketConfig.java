@@ -2,6 +2,7 @@ package org.example.projectchat.config.security;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.projectchat.component.CustomUserDetails;
 import org.example.projectchat.component.JWTUtil;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -70,7 +71,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         try {
                             String username = jwtUtil.extractUsername(jwt);
                             if(StringUtils.hasText(username)){
-                                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                                CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(username);
+                                log.debug("Authenticated user ID: {} in WebSocket", userDetails.getId());
+                                log.debug("Admin Group IDs: {} in WebSocket", userDetails.getAdminGroupIds());
+
 
                                 if(jwtUtil.validateToken(jwt, userDetails)){
                                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
