@@ -7,7 +7,7 @@ let currentSubscription = null;
 const API_BASE_URL = 'http://localhost:8080/api';
 
 // DOM Elements (cached) - Ensure DOM is loaded before accessing these
-let disconnectBtn, groupNameInput, createGroupBtn,
+let groupNameInput, createGroupBtn,
     privateChatUsernameInput, createPrivateChatBtn, chatListDiv, refreshChatsBtn,
     chatTitle, messagesDiv, messageInput, sendBtn, statusDiv, pmSection,
     pmGroupNameSpan, participantUsernameInput, addParticipantBtn, removeParticipantBtn,
@@ -15,7 +15,6 @@ let disconnectBtn, groupNameInput, createGroupBtn,
 
 // Function to cache DOM elements after the DOM is ready
 function cacheDOMElements() {
-    disconnectBtn = document.getElementById('disconnectBtn');
     groupNameInput = document.getElementById('groupName');
     createGroupBtn = document.getElementById('createGroupBtn');
     privateChatUsernameInput = document.getElementById('privateChatUsername');
@@ -36,6 +35,31 @@ function cacheDOMElements() {
     participantListDiv = document.getElementById('participant-list');
     logoutBtn = document.getElementById('logoutBtn');
     userInfoDiv = document.getElementById('userInfo');
+
+
+    console.log("Caching DOM elements results:");
+    console.log("groupNameInput:", groupNameInput);
+    console.log("createGroupBtn:", createGroupBtn);
+    console.log("privateChatUsernameInput:", privateChatUsernameInput);
+    console.log("createPrivateChatBtn:", createPrivateChatBtn);
+    console.log("chatListDiv:", chatListDiv);
+    console.log("refreshChatsBtn:", refreshChatsBtn);
+    console.log("chatTitle:", chatTitle);
+    console.log("messagesDiv:", messagesDiv);
+    console.log("messageInput:", messageInput);
+    console.log("sendBtn:", sendBtn);
+    console.log("pmSection:", pmSection);
+    console.log("pmGroupNameSpan:", pmGroupNameSpan);
+    console.log("participantUsernameInput:", participantUsernameInput);
+    console.log("addParticipantBtn:", addParticipantBtn);
+    console.log("removeParticipantBtn:", removeParticipantBtn);
+    console.log("participantListDiv:", participantListDiv);
+    console.log("logoutBtn:", logoutBtn);
+    console.log("userInfoDiv:", userInfoDiv);
+
+    if (!chatListDiv || !messagesDiv || !messageInput || !sendBtn || !logoutBtn || !userInfoDiv) {
+        console.error("One or more critical UI elements not found after caching! Application may not be fully functional.");
+    }
 }
 
 // --- Logging ---
@@ -83,53 +107,58 @@ function logError(message, error) {
 
 // --- UI State ---
 function setUIState(connected) {
-    if (!disconnectBtn) return; // Don't run if DOM elements aren't cached yet
 
-    disconnectBtn.disabled = !connected;
-    createGroupBtn.disabled = !connected;
-    createPrivateChatBtn.disabled = !connected;
-    refreshChatsBtn.disabled = !connected;
-    groupNameInput.disabled = !connected;
-    privateChatUsernameInput.disabled = !connected;
-    logoutBtn.disabled = !connected;
+    if (createGroupBtn) createGroupBtn.disabled = !connected;
+    if (createPrivateChatBtn) createPrivateChatBtn.disabled = !connected;
+    if (refreshChatsBtn) refreshChatsBtn.disabled = !connected;
+    if (groupNameInput) groupNameInput.disabled = !connected;
+    if (privateChatUsernameInput) privateChatUsernameInput.disabled = !connected;
+    if (logoutBtn) logoutBtn.disabled = !connected;
 
     const chatSelected = connected && currentChat;
-    messageInput.disabled = !chatSelected;
-    sendBtn.disabled = !chatSelected;
+    if (messageInput) messageInput.disabled = !chatSelected;
+    if (sendBtn) sendBtn.disabled = !chatSelected;
 
     // --- Participant Management UI Logic ---
     const groupChatSelected = chatSelected && currentChat.type === 'GROUP';
-    if (groupChatSelected) {
-        pmSection.style.display = 'block'; // Show PM section
-        pmGroupNameSpan.textContent = currentChat.name || `Group ${currentChat.id}`; // Update title
-        addParticipantBtn.disabled = false;
-        removeParticipantBtn.disabled = false;
-        participantUsernameInput.disabled = false;
-    } else {
-        pmSection.style.display = 'none'; // Hide PM section
-        addParticipantBtn.disabled = true;
-        removeParticipantBtn.disabled = true;
-        participantUsernameInput.disabled = true;
-        participantUsernameInput.value = ''; // Clear input if not group
-        participantListDiv.innerHTML = ''; // Clear participant list
-    }
-    // --- End Participant Management UI ---
+    if(pmSection && pmGroupNameSpan && addParticipantBtn && removeParticipantBtn && participantUsernameInput && participantListDiv){
+        pmSection.style.display = groupChatSelected ? 'block' : 'none';
+        if (groupChatSelected) {
+            pmGroupNameSpan.textContent = currentChat.name || `Group ${currentChat.id}`;
+        }
 
-    if (connected && currentUser) {
-        statusDiv.textContent = `Status: Connected as ${currentUser.username}`;
-        userInfoDiv.textContent = `Logged in as: ${currentUser.username}`; // Show username
-        chatTitle.textContent = currentChat ? `${currentChat.name} (ID: ${currentChat.id}, Type: ${currentChat.type})` : 'Select a chat';
-        if(currentChat) messageInput.focus();
+        addParticipantBtn.disabled = !groupChatSelected;
+        removeParticipantBtn.disabled = !groupChatSelected;
+        participantUsernameInput.disabled = !groupChatSelected;
+
+        if (!groupChatSelected) {
+            participantUsernameInput.value = '';
+            participantListDiv.innerHTML = '';
+        }
+    }else{
+        console.warn("Participant Management UI elements not fully found.");
+        if (pmSection) pmSection.style.display = 'none';
+    }
+
+    if (userInfoDiv && chatTitle && chatListDiv && messagesDiv) {
+        if (connected && currentUser) {
+            statusDiv.textContent = `Status: Connected as ${currentUser.username}`;
+            userInfoDiv.textContent = `Logged in as: ${currentUser.username}`;
+            chatTitle.textContent = currentChat ? `${currentChat.name} (ID: ${currentChat.id}, Type: ${currentChat.type})` : 'Select a chat';
+            if(currentChat && messageInput) messageInput.focus();
+        } else {
+            statusDiv.textContent = 'Status: Disconnected';
+            userInfoDiv.textContent = 'Not logged in';
+            chatTitle.textContent = 'No chat selected';
+            chatListDiv.innerHTML = '<p style="color: #888; padding: 10px;">Connect to load chats...</p>';
+            messagesDiv.innerHTML = '';
+            // pmSection скрывается логикой выше
+            currentChat = null;
+            currentUser = null;
+            currentSubscription = null;
+        }
     } else {
-        statusDiv.textContent = 'Status: Disconnected';
-        userInfoDiv.textContent = 'Not logged in';
-        chatTitle.textContent = 'No chat selected';
-        chatListDiv.innerHTML = '<p style="color: #888; padding: 10px;">Connect to load chats...</p>';
-        messagesDiv.innerHTML = '';
-        // pmSection is hidden by the logic above
-        currentChat = null;
-        currentUser = null;
-        currentSubscription = null;
+        console.error("Core UI elements for status/title/chat list/messages not found!");
     }
 }
 
@@ -735,6 +764,7 @@ function scrollToBottom() {
 document.addEventListener('DOMContentLoaded', () => {
     // Cache DOM elements now that they exist
     cacheDOMElements();
+    console.log("Cached elements:", { userInfoDiv, logoutBtn  });
 
     const token = localStorage.getItem('jwtToken');
     if (token) {

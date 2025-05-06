@@ -4,7 +4,7 @@ package org.example.projectchat.controller;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.projectchat.DTO.ChatMessageDto;
+import org.example.projectchat.DTO.chat.ChatMessageDto;
 import org.example.projectchat.model.ChatRoom;
 import org.example.projectchat.model.Message;
 import org.example.projectchat.model.User;
