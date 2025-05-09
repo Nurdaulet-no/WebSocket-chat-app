@@ -12,12 +12,14 @@ import org.example.projectchat.component.CustomUserDetails;
 import org.example.projectchat.component.JWTUtil;
 import org.example.projectchat.config.security.MyUserDetailService;
 import org.example.projectchat.exception.TokenRefreshException;
+import org.example.projectchat.model.RefreshToken;
 import org.example.projectchat.model.Role;
 import org.example.projectchat.model.User;
 import org.example.projectchat.repository.UserRepository;
 import org.example.projectchat.service.RoleService;
 import org.example.projectchat.service.RefreshTokenService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -89,7 +91,7 @@ public class AuthController {
         }
 
         try {
-            org.example.projectchat.model.RefreshToken foundRefreshToken = refreshTokenService.findByToken(refreshToken)
+            RefreshToken foundRefreshToken = refreshTokenService.findByToken(refreshToken)
                     .orElseThrow(() -> new TokenRefreshException("Refresh token not found in DB."));
 
             refreshTokenService.verifyExpirationAndRevocation(foundRefreshToken);
@@ -156,6 +158,39 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CREATED).body("User are successfully created");
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server error during registration: " + e.getMessage());
+        }
+
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@CookieValue(name = "refreshToken", required = false) String refreshTokenString, HttpServletResponse response){
+        log.info("Logout attempt received.");
+
+        if (refreshTokenString == null || refreshTokenString.isEmpty()) {
+            log.info("No refresh token found in cookie. Assuming already logged out or cookie cleared.");
+            return ResponseEntity.ok("Successfully logged out (no active refresh token found).");
+        }
+
+        try {
+            refreshTokenService.invalidateRefreshToken(refreshTokenString);
+            log.info("Refresh token invalidated successfully on the server.");
+
+            clearRefreshTokenCookie(response);
+            log.info("Refresh token cookie cleared successfully.");
+
+            return ResponseEntity.ok("Logout successful.");
+        }catch (TokenRefreshException exception){
+            log.warn("Error during logout due to token issue: {}", exception.getMessage());
+            clearRefreshTokenCookie(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Logout failed due to token issue: " + exception.getMessage());
+        }catch (DataAccessException dae){
+            log.error("Database access error during logout: {}", dae.getMessage(), dae);
+            clearRefreshTokenCookie(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server error during logout (database access).");
+        }catch (Exception ex){
+            log.error("Unexpected error during logout: {}", ex.getMessage(), ex);
+            clearRefreshTokenCookie(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected server error occurred during logout.");
         }
 
     }

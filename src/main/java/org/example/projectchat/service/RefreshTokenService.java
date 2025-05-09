@@ -116,4 +116,28 @@ public class RefreshTokenService {
     public int deleteExpiredTokens(){
         return tokenRepository.deleteAllByExpiryDateBefore(Instant.now());
     }
+
+    @Transactional
+    public void invalidateRefreshToken(String tokenString){
+        if(tokenString.isEmpty() || tokenString == null){
+            log.debug("Attempted to invalidate null or empty refresh token");
+            return;
+        }
+
+        Optional<RefreshToken> refreshToken = tokenRepository.findByToken(tokenString);
+
+        if(refreshToken.isPresent()){
+            RefreshToken token = refreshToken.get();
+            if(token.isRevoked()){
+                log.debug("Refresh token (token string: {}) is already revoked. No action needed.", tokenString);
+                return;
+            }
+
+            token.setRevoked(true);
+            tokenRepository.save(token);
+            log.info("Refresh token (token string: {}) successfully marked as revoked.", tokenString);
+        }else {
+            log.info("Attempted to invalidate a refresh token that was not found in the database (token string: {}). It might have been already deleted or never existed.", tokenString);
+        }
+    }
 }
