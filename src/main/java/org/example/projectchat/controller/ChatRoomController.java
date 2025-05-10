@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.projectchat.DTO.chat.ChatRoomDto;
+import org.example.projectchat.DTO.chat.ChatRoomListItemDto;
 import org.example.projectchat.DTO.chat.CreateGroupChatRequest;
 import org.example.projectchat.model.User;
 import org.example.projectchat.service.ChatRoomService;
@@ -28,14 +29,14 @@ public class ChatRoomController {
 
     // Get current user's chat
     @GetMapping
-    public ResponseEntity<List<ChatRoomDto>> getUserChatRooms(Principal principal){
+    public ResponseEntity<List<ChatRoomListItemDto>> getUserChatRooms(Principal principal){
         String username = principal.getName();
         log.info("Response chat rooms for user {}", username);
 
         User user = userService.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        List<ChatRoomDto> chatRoomDtos = chatRoomService.findUserChatRooms(user);
+        List<ChatRoomListItemDto> chatRoomDtos = chatRoomService.findUserChatListItems(user);
 
         return ResponseEntity.ok(chatRoomDtos);
     }

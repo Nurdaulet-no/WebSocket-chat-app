@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -24,6 +25,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
     @Query("select distinct cr from ChatRoom cr join fetch cr.participants p where :user member of cr.participants")
     Set<ChatRoom> findByParticipantsContaining(@Param("user") User user);
+    List<ChatRoom> findAllByParticipantsContaining(User user);
 
     boolean existsByIdAndParticipants_Id(Long chatRoomId, Long userId);
     boolean existsByNameAndType(String name, ChatRoomType type);

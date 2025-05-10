@@ -31,6 +31,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -155,7 +158,9 @@ public class AuthController {
 
         try {
             userRepository.save(newUser);
-            return ResponseEntity.status(HttpStatus.CREATED).body("User are successfully created");
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "User created successfully");
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server error during registration: " + e.getMessage());
         }
@@ -177,8 +182,9 @@ public class AuthController {
 
             clearRefreshTokenCookie(response);
             log.info("Refresh token cookie cleared successfully.");
-
-            return ResponseEntity.ok("Logout successful.");
+            Map<String, String> responseLogout = new HashMap<>();
+            responseLogout.put("message", "Logout successful.");
+            return ResponseEntity.ok(responseLogout);
         }catch (TokenRefreshException exception){
             log.warn("Error during logout due to token issue: {}", exception.getMessage());
             clearRefreshTokenCookie(response);

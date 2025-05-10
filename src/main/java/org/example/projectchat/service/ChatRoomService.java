@@ -5,6 +5,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.projectchat.DTO.chat.ChatRoomDto;
+import org.example.projectchat.DTO.chat.ChatRoomListItemDto;
+import org.example.projectchat.DTO.chat.MessageDto;
 import org.example.projectchat.model.ChatRoom;
 import org.example.projectchat.model.ChatRoomType;
 import org.example.projectchat.model.User;
@@ -25,6 +27,7 @@ import java.util.Set;
 public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserService userService;
+    private final MessageService messageService;
 
     public List<ChatRoomDto> findUserChatRooms(User user){
         Set<ChatRoom> userRooms = chatRoomRepository.findByParticipantsContaining(user);
@@ -44,6 +47,29 @@ public class ChatRoomService {
 
         return roomDtoList;
     }
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<ChatRoomListItemDto> findUserChatListItems(User user) {
+        List<ChatRoom> userRooms = chatRoomRepository.findAllByParticipantsContaining(user);
+
+        return userRooms.stream()
+            .map(roomEntity -> {
+                MessageDto lastMessage = messageService.findLastMessageForRoom(roomEntity.getId());
+                List<String> participantUsernames = roomEntity.getParticipants().stream()
+                        .map(User::getUsername)
+                        .toList();
+
+                return new ChatRoomListItemDto(
+                        roomEntity.getId(),
+                        roomEntity.getName(),
+                        roomEntity.getType(),
+                        participantUsernames,
+                        lastMessage
+                );
+            })
+            .toList();
+    }
+
 
     @Transactional
     public ChatRoomDto createGroupChat(String groupName, User creator, Set<String> initParticipantUsernames){

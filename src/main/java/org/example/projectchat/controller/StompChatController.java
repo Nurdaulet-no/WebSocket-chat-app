@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.projectchat.DTO.chat.ChatMessageDto;
+import org.example.projectchat.DTO.chat.MessageDto;
 import org.example.projectchat.model.ChatRoom;
 import org.example.projectchat.model.Message;
 import org.example.projectchat.model.User;
@@ -32,27 +33,29 @@ public class StompChatController {
     private final ChatRoomRepository chatRoomRepository;
     private final UserService userService;
 
-    // Real time STOMP message handling
-    @MessageMapping("/chat/{roomId}/sendMessage")
+    @MessageMapping("/chat.sendMessage/{roomId}")
     @Transactional
     public void sendMessage(@DestinationVariable Long roomId, @Payload ChatMessageDto chatMessageDto, Principal principal){
         String username = principal.getName();
-        log.info("Сообщение получено для комнаты {}: от {}: {}", roomId, username, chatMessageDto.content());
+        log.info("Сообщение получено для комнаты {}: от {}: {} (ClientMsgID: {})",
+                roomId, username, chatMessageDto.content(), chatMessageDto.clientMessageId()); // Log it
 
-        User sender = userService.findByUsername(username).orElseThrow(()->{
-            log.error("Ошибка: Пользователь {} не найден", username);
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender not found");
+        User sender = userService.findByUsername(username).orElseThrow(() -> {
+            log.error("STOMP CHAT Error: User {} not found", username);
+            messagingTemplate.convertAndSendToUser(username, "/queue/errors", "User not found for sending message.");
+            return new IllegalArgumentException("Sender not found");
         });
 
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow(() ->{
-            log.error("Ошибка: Комната с ID {} не найдена", roomId);
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Room chat not found!");
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow(() -> {
+            log.error("STOMP CHAT Error: Room with ID {} not found", roomId);
+            messagingTemplate.convertAndSendToUser(username, "/queue/errors", "Chat room not found.");
+            return new IllegalArgumentException("Room chat not found!");
         });
 
-        if(!chatRoom.getParticipants().contains(sender)){
-            log.warn("Пользователь {} не является участником комнаты {}", username, roomId);
-            messagingTemplate.convertAndSendToUser(username, "queue/errors", "Not a participant");
-            throw new AccessDeniedException("Не участник комнаты");
+        if (chatRoom.getParticipants().stream().noneMatch(p -> p.getId().equals(sender.getId()))) {
+            log.warn("STOMP CHAT: User {} is not a participant of room {}", username, roomId);
+            messagingTemplate.convertAndSendToUser(username, "/queue/errors", "You are not a participant of this chat room.");
+            throw new AccessDeniedException("User is not a participant of this chat room.");
         }
 
         Message message = new Message();
@@ -63,13 +66,16 @@ public class StompChatController {
         Message savedMessage = messageRepository.save(message);
         log.info("Сообщение сохранено с ID: {}", savedMessage.getId());
 
-        ChatMessageDto messageToSend = new ChatMessageDto(
+        MessageDto messageToSendToClients = new MessageDto(
+                savedMessage.getId(),
+                savedMessage.getContent(),
+                savedMessage.getCreatedAt(),
                 sender.getUsername(),
-                savedMessage.getContent()
+                chatMessageDto.clientMessageId()
         );
 
-        String destination = "/topic/chats/" + roomId;
-        messagingTemplate.convertAndSend(destination, messageToSend);
-        log.info("Сообщение отправлено в топик: {}", destination);
+        String destination = "/topic/rooms/" + roomId;
+        messagingTemplate.convertAndSend(destination, messageToSendToClients);
+        log.info("STOMP CHAT: Message broadcast to topic: {} with payload: {}", destination, messageToSendToClients);
     }
 }

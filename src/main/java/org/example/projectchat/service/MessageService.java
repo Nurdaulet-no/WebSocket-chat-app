@@ -6,6 +6,7 @@ import org.example.projectchat.DTO.chat.MessageDto;
 import org.example.projectchat.DTO.chat.MessageRequest;
 import org.example.projectchat.model.Message;
 import org.example.projectchat.model.User;
+import org.example.projectchat.repository.ChatRoomRepository;
 import org.example.projectchat.repository.MessageRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -14,12 +15,15 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MessageService {
     private final MessageRepository messageRepository;
-    private final ChatRoomService chatRoomService;
+//    private final ChatRoomService chatRoomService;
+    private final ChatRoomRepository chatRoomRepository;
     private final ModelMapper modelMapper;
 
     public void saveMessage(MessageRequest messageRequest){
@@ -30,7 +34,7 @@ public class MessageService {
 
     @Transactional(readOnly = true)
     public Page<MessageDto> findMessageHistory(Long chatRoomId, User user, Pageable pageable){
-        if(!chatRoomService.existsByIdAndParticipants_Id(chatRoomId, user.getId())){
+        if(!chatRoomRepository.existsByIdAndParticipants_Id(chatRoomId, user.getId())){
             log.warn("Access denied: User {} not contain in group {}", user.getUsername(), chatRoomId);
             throw new AccessDeniedException("Access denied for history of this group");
         }
@@ -42,7 +46,24 @@ public class MessageService {
                 message.getId(),
                 message.getContent(),
                 message.getCreatedAt(),
-                message.getSender() != null ? message.getSender().getUsername() : "Unknown"
+                message.getSender() != null ? message.getSender().getUsername() : "Unknown",
+                null
         ));
+    }
+
+    @Transactional(readOnly = true)
+    public MessageDto findLastMessageForRoom(Long chatRoomId) {
+        Optional<Message> lastMessageOptional = messageRepository.findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoomId);
+        if (lastMessageOptional.isPresent()) {
+            Message message = lastMessageOptional.get();
+            return new MessageDto(
+                    message.getId(),
+                    message.getContent(),
+                    message.getCreatedAt(),
+                    message.getSender() != null ? message.getSender().getUsername() : "System",
+                    null
+            );
+        }
+        return null;
     }
 }

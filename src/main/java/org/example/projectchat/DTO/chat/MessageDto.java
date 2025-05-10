@@ -6,6 +6,7 @@ public record MessageDto(
         Long id,
         String content,
         LocalDateTime createdAt,
-        String senderUsername
+        String senderUsername,
+        String clientMessageId
 ){
 }
