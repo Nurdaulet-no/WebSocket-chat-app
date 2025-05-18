@@ -190,7 +190,7 @@ public class ChatRoomService {
     }
 
     @Transactional
-    public ChatRoomDto deleteParticipantsFromGroup(Long roomId, String usernameToDelete, User initiator){
+    public void deleteParticipantsFromGroup(Long roomId, String usernameToDelete, User initiator){
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
 
@@ -211,18 +211,16 @@ public class ChatRoomService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Вы не можете удалить себя из группы этим методом. Используйте функцию 'Покинуть группу'.");
         }
 
-        boolean deleted = chatRoom.getParticipants().remove(userToDelete);
+        boolean wasRemoved = chatRoom.getParticipants().removeIf(participant -> participant.getId().equals(userToDelete.getId()));
 
-        if(deleted){
-            log.warn("Пользователь {} не найден в участниках группы {}", usernameToDelete, roomId);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь '" + usernameToDelete + "' не является участником этой группы");
+        if (!wasRemoved) {
+            log.warn("Пользователь {} не найден в участниках группы {} и не был удален.", usernameToDelete, roomId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь '" + usernameToDelete + "' не является участником этой группы (или уже был удален)");
         }
 
         chatRoom = chatRoomRepository.save(chatRoom);
         log.info("Пользователь {} успешно удален из группу '{}' (ID: {}) пользователем {}",
                 userToDelete.getUsername(), chatRoom.getName(), chatRoom.getId(), initiator.getUsername());
-
-        return mapToChatRoomDto(chatRoom, initiator.getUsername());
     }
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)

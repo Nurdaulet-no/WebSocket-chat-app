@@ -80,12 +80,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER_WHITELIST).permitAll()
                         .requestMatchers(
-                                "/",
-                                "/main.html",
-                                "/css/main.css",
-                                "/js/script.js",
-                                "/fonts/**",
-                                "favicon.ico",
                                 "/error"
                         ).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
